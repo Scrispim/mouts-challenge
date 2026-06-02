@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using Ambev.DeveloperEvaluation.Application.Commands.CreateSale;
 using Ambev.DeveloperEvaluation.Application.Commands.UpdateSale;
 using Ambev.DeveloperEvaluation.Application.DTOs;
-using Ambev.DeveloperEvaluation.Application.queries.GetSale;
+using Ambev.DeveloperEvaluation.WebApi.Common;
 using FluentAssertions;
 
 namespace Ambev.DeveloperEvaluation.Integration.Sales;
@@ -27,16 +27,15 @@ public class SalesApiTests : IClassFixture<CustomWebApplicationFactory>
         var response = await _client.PostAsJsonAsync("/api/sales", command);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var dto = await response.Content.ReadFromJsonAsync<SaleDto>();
-        dto.Should().NotBeNull();
-        dto!.SaleNumber.Should().Be(command.SaleNumber);
+        var body = await response.Content.ReadFromJsonAsync<ApiResponseWithData<SaleDto>>();
+        body!.Success.Should().BeTrue();
+        var dto = body.Data!;
+        dto.SaleNumber.Should().Be(command.SaleNumber);
         dto.CustomerName.Should().Be(command.CustomerName);
         dto.Items.Should().HaveCount(1);
         dto.Items[0].Discount.Should().Be(0m);
         dto.Items[0].TotalAmount.Should().Be(2 * 100m);
     }
-
-    
 
     [Fact]
     public async Task CreateSale_NoItems_Returns400()
@@ -78,8 +77,9 @@ public class SalesApiTests : IClassFixture<CustomWebApplicationFactory>
         var response = await _client.PostAsJsonAsync("/api/sales", command);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var dto = await response.Content.ReadFromJsonAsync<SaleDto>();
-        dto!.Items[0].Discount.Should().Be(0.10m);
+        var body = await response.Content.ReadFromJsonAsync<ApiResponseWithData<SaleDto>>();
+        var dto = body!.Data!;
+        dto.Items[0].Discount.Should().Be(0.10m);
         dto.Items[0].TotalAmount.Should().Be(5 * 100m * 0.90m);
     }
 
@@ -93,8 +93,10 @@ public class SalesApiTests : IClassFixture<CustomWebApplicationFactory>
         var response = await _client.GetAsync($"/api/sales/{created.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var dto = await response.Content.ReadFromJsonAsync<SaleDto>();
-        dto!.Id.Should().Be(created.Id);
+        var body = await response.Content.ReadFromJsonAsync<ApiResponseWithData<SaleDto>>();
+        body!.Success.Should().BeTrue();
+        var dto = body.Data!;
+        dto.Id.Should().Be(created.Id);
         dto.SaleNumber.Should().Be(created.SaleNumber);
     }
 
@@ -117,11 +119,12 @@ public class SalesApiTests : IClassFixture<CustomWebApplicationFactory>
         var response = await _client.GetAsync("/api/sales?_page=1&_size=10");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<GetSalesResult>();
+        var result = await response.Content.ReadFromJsonAsync<PaginatedResponse<SaleDto>>();
         result.Should().NotBeNull();
-        result!.Items.Should().NotBeEmpty();
-        result.Page.Should().Be(1);
-        result.PageSize.Should().Be(10);
+        result!.Success.Should().BeTrue();
+        result.Data.Should().NotBeEmpty();
+        result.CurrentPage.Should().Be(1);
+        result.TotalCount.Should().BeGreaterThan(0);
     }
 
     // ─── PUT /api/sales/{id} ──────────────────────────────────────────────────
@@ -152,8 +155,9 @@ public class SalesApiTests : IClassFixture<CustomWebApplicationFactory>
         var response = await _client.PutAsJsonAsync($"/api/sales/{created.Id}", updateCommand);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var dto = await response.Content.ReadFromJsonAsync<SaleDto>();
-        dto!.CustomerName.Should().Be("Updated Customer");
+        var body = await response.Content.ReadFromJsonAsync<ApiResponseWithData<SaleDto>>();
+        var dto = body!.Data!;
+        dto.CustomerName.Should().Be("Updated Customer");
         dto.Items[0].Discount.Should().Be(0.20m);
     }
 
@@ -187,13 +191,15 @@ public class SalesApiTests : IClassFixture<CustomWebApplicationFactory>
     // ─── DELETE /api/sales/{id} ───────────────────────────────────────────────
 
     [Fact]
-    public async Task CancelSale_ExistingSale_Returns204()
+    public async Task CancelSale_ExistingSale_Returns200()
     {
         var created = await CreateSaleAsync();
 
         var response = await _client.DeleteAsync($"/api/sales/{created.Id}");
 
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<ApiResponse>();
+        body!.Success.Should().BeTrue();
     }
 
     [Fact]
@@ -221,7 +227,8 @@ public class SalesApiTests : IClassFixture<CustomWebApplicationFactory>
     {
         var response = await _client.PostAsJsonAsync("/api/sales", BuildCreateCommand(quantity));
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<SaleDto>())!;
+        var body = await response.Content.ReadFromJsonAsync<ApiResponseWithData<SaleDto>>();
+        return body!.Data!;
     }
 
     private static CreateSaleCommand BuildCreateCommand(int quantity = 2) => new()

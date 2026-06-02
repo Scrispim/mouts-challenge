@@ -2,14 +2,13 @@ using Ambev.DeveloperEvaluation.Application.Commands.CanselSale;
 using Ambev.DeveloperEvaluation.Application.Commands.CreateSale;
 using Ambev.DeveloperEvaluation.Application.Commands.UpdateSale;
 using Ambev.DeveloperEvaluation.Application.queries.GetSale;
+using Ambev.DeveloperEvaluation.WebApi.Common;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class SalesController(IMediator mediator) : ControllerBase
+public class SalesController(IMediator mediator) : BaseController
 {
     [HttpGet]
     public async Task<IActionResult> GetAll(
@@ -25,7 +24,8 @@ public class SalesController(IMediator mediator) : ControllerBase
 
         var query = new GetSalesQuery(page, size, order, filters.Count > 0 ? filters : null);
         var result = await mediator.Send(query, cancellationToken);
-        return Ok(result);
+
+        return OkPaginated(result.Items, result.Page, result.TotalPages, result.TotalCount);
     }
 
     [HttpGet("{id:guid}")]
@@ -39,7 +39,7 @@ public class SalesController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateSaleCommand command, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(command, cancellationToken);
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        return Created(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id:guid}")]
@@ -54,13 +54,13 @@ public class SalesController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Cancel(Guid id, CancellationToken cancellationToken)
     {
         await mediator.Send(new CancelSaleCommand(id), cancellationToken);
-        return NoContent();
+        return base.Ok(new ApiResponse { Success = true, Message = "Sale cancelled successfully" });
     }
 
     [HttpDelete("{saleId:guid}/items/{itemId:guid}")]
     public async Task<IActionResult> CancelItem(Guid saleId, Guid itemId, CancellationToken cancellationToken)
     {
         await mediator.Send(new CancelSaleItemCommand(saleId, itemId), cancellationToken);
-        return NoContent();
+        return base.Ok(new ApiResponse { Success = true, Message = "Item cancelled successfully" });
     }
 }
