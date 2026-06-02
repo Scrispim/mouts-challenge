@@ -1,3 +1,5 @@
+using AutoMapper;
+using Ambev.DeveloperEvaluation.Application.Mappings;
 using Ambev.DeveloperEvaluation.Application.queries.GetSale;
 using Ambev.DeveloperEvaluation.Domain.Entities;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
@@ -10,11 +12,12 @@ namespace Ambev.DeveloperEvaluation.Unit.Application;
 public class GetSaleQueryHandlerTests
 {
     private readonly ISaleRepository _repository = Substitute.For<ISaleRepository>();
+    private readonly IMapper _mapper = new MapperConfiguration(cfg => cfg.AddProfile<SaleProfile>()).CreateMapper();
     private readonly GetSaleQueryHandler _handler;
 
     public GetSaleQueryHandlerTests()
     {
-        _handler = new GetSaleQueryHandler(_repository);
+        _handler = new GetSaleQueryHandler(_repository, _mapper);
     }
 
     [Fact]

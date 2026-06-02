@@ -1,10 +1,11 @@
+using AutoMapper;
 using Ambev.DeveloperEvaluation.Application.DTOs;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using MediatR;
 
 namespace Ambev.DeveloperEvaluation.Application.Commands.UpdateSale;
 
-public class UpdateSaleCommandHandler(ISaleRepository saleRepository, IMediator mediator)
+public class UpdateSaleCommandHandler(ISaleRepository saleRepository, IMediator mediator, IMapper mapper)
     : IRequestHandler<UpdateSaleCommand, SaleDto>
 {
     public async Task<SaleDto> Handle(UpdateSaleCommand request, CancellationToken cancellationToken)
@@ -30,6 +31,6 @@ public class UpdateSaleCommandHandler(ISaleRepository saleRepository, IMediator 
 
         sale.ClearDomainEvents();
 
-        return sale.ToDto();
+        return mapper.Map<SaleDto>(sale);
     }
 }

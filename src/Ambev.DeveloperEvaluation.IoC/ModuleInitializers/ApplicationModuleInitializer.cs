@@ -1,6 +1,7 @@
 using Ambev.DeveloperEvaluation.Application.Common;
 using Ambev.DeveloperEvaluation.Application.Commands.CreateSale;
 using Ambev.DeveloperEvaluation.Application.EventHandlers;
+using Ambev.DeveloperEvaluation.Application.Mappings;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -20,5 +21,6 @@ public class ApplicationModuleInitializer : IModuleInitializer
         });
 
         builder.Services.AddValidatorsFromAssemblyContaining<CreateSaleCommandValidator>();
+        builder.Services.AddAutoMapper(typeof(SaleProfile).Assembly);
     }
 }

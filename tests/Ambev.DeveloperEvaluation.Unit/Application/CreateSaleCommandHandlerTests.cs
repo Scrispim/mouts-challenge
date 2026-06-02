@@ -1,4 +1,6 @@
+using AutoMapper;
 using Ambev.DeveloperEvaluation.Application.Commands.CreateSale;
+using Ambev.DeveloperEvaluation.Application.Mappings;
 using Ambev.DeveloperEvaluation.Domain.Entities;
 using Ambev.DeveloperEvaluation.Domain.Events;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
@@ -13,11 +15,12 @@ public class CreateSaleCommandHandlerTests
 {
     private readonly ISaleRepository _repository = Substitute.For<ISaleRepository>();
     private readonly IMediator _mediator = Substitute.For<IMediator>();
+    private readonly IMapper _mapper = new MapperConfiguration(cfg => cfg.AddProfile<SaleProfile>()).CreateMapper();
     private readonly CreateSaleCommandHandler _handler;
 
     public CreateSaleCommandHandlerTests()
     {
-        _handler = new CreateSaleCommandHandler(_repository, _mediator);
+        _handler = new CreateSaleCommandHandler(_repository, _mediator, _mapper);
         _repository.AddAsync(Arg.Any<Sale>(), Arg.Any<CancellationToken>())
             .Returns(x => x.Arg<Sale>());
     }

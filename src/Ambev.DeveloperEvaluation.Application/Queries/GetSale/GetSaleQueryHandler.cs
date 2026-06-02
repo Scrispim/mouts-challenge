@@ -1,10 +1,11 @@
+using AutoMapper;
 using Ambev.DeveloperEvaluation.Application.DTOs;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using MediatR;
 
 namespace Ambev.DeveloperEvaluation.Application.queries.GetSale;
 
-public class GetSaleQueryHandler(ISaleRepository saleRepository)
+public class GetSaleQueryHandler(ISaleRepository saleRepository, IMapper mapper)
     : IRequestHandler<GetSaleQuery, SaleDto?>
 {
     public async Task<SaleDto?> Handle(GetSaleQuery request, CancellationToken cancellationToken)
@@ -12,6 +13,6 @@ public class GetSaleQueryHandler(ISaleRepository saleRepository)
         var sale = await saleRepository.GetByIdAsync(request.Id, cancellationToken);
         if (sale is null) return null;
 
-        return sale.ToDto();
+        return mapper.Map<SaleDto>(sale);
     }
 }
