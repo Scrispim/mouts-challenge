@@ -72,6 +72,96 @@ This section includes links to the detailed documentation for the different API 
 -->
 
 ## Project Structure
-This section describes the overall structure and organization of the project files and directories. 
+This section describes the overall structure and organization of the project files and directories.
 
 See [Project Structure](/.doc/project-structure.md)
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [Docker](https://www.docker.com/get-started) and Docker Compose
+
+### Configuration
+
+1. Clone the repository
+2. Copy the environment file and adjust if needed:
+   ```bash
+   cp .env.example .env   # or edit .env directly
+   ```
+   Default values in `.env`:
+   ```
+   POSTGRES_DB=motus_db
+   POSTGRES_USER=dev_user
+   POSTGRES_PASSWORD=dev123
+   ```
+
+### Running with Docker (recommended)
+
+```bash
+docker compose up --build
+```
+
+The API will be available at `http://localhost:8080`.
+Swagger UI: `http://localhost:8080/swagger`
+
+### Running locally
+
+1. Start the database:
+   ```bash
+   docker compose up db
+   ```
+
+2. Run the API:
+   ```bash
+   dotnet run --project src/Ambev.DeveloperEvaluation.WebApi
+   ```
+
+The API will be available at `https://localhost:5001` / `http://localhost:5000`.
+
+### Running Tests
+
+**Unit tests:**
+```bash
+dotnet test tests/Ambev.DeveloperEvaluation.Unit
+```
+
+**Integration tests:**
+```bash
+dotnet test tests/Ambev.DeveloperEvaluation.Integration
+```
+
+**All tests:**
+```bash
+dotnet test
+```
+
+### API Overview
+
+Base URL: `/api/sales`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/sales` | List sales (paginated, filterable, orderable) |
+| `GET` | `/api/sales/{id}` | Get sale by ID |
+| `POST` | `/api/sales` | Create a new sale |
+| `PUT` | `/api/sales/{id}` | Update a sale |
+| `DELETE` | `/api/sales/{id}` | Cancel a sale |
+| `DELETE` | `/api/sales/{id}/items/{itemId}` | Cancel a sale item |
+
+**Query parameters for GET /api/sales:**
+
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `_page` | Page number (default: 1) | `?_page=2` |
+| `_size` | Page size (default: 10) | `?_size=20` |
+| `_order` | Sort fields | `?_order=saleDate desc` |
+| `customerName` | Filter by customer name (supports `*` wildcard) | `?customerName=John*` |
+| `branchName` | Filter by branch name | `?branchName=*Store` |
+| `saleNumber` | Filter by sale number | `?saleNumber=SALE-001` |
+| `isCancelled` | Filter by cancelled status | `?isCancelled=false` |
+| `_minSaleDate` | Filter sales from date | `?_minSaleDate=2024-01-01` |
+| `_maxSaleDate` | Filter sales up to date | `?_maxSaleDate=2024-12-31` |
